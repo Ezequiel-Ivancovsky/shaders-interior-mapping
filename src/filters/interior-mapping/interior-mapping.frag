@@ -18,6 +18,18 @@ uniform float uChromaKeyColorG;
 uniform float uChromaKeyColorB;
 uniform float uChromaKeyTolerance;
 uniform float uBrightness;
+uniform float uLeftWallTiled;
+uniform float uLeftWallTileSizeX;
+uniform float uLeftWallTileSizeY;
+uniform float uRightWallTiled;
+uniform float uRightWallTileSizeX;
+uniform float uRightWallTileSizeY;
+uniform float uCeilingTiled;
+uniform float uCeilingTileSizeX;
+uniform float uCeilingTileSizeY;
+uniform float uFloorTiled;
+uniform float uFloorTileSizeX;
+uniform float uFloorTileSizeY;
 
 varying vec2 outTexCoord;
 
@@ -43,6 +55,14 @@ float keyedAlpha(vec3 color) {
 
 float rectMask(vec2 uv) {
   return step(0.0, uv.x) * step(0.0, uv.y) * step(uv.x, 1.0) * step(uv.y, 1.0);
+}
+
+vec2 tileSurfaceUv(vec2 uv, float tiled, vec2 tileSize) {
+  if (tiled < 0.5) {
+    return uv;
+  }
+
+  return fract(uv / max(tileSize, vec2(0.001)));
 }
 
 vec3 roomRay(vec2 uv) {
@@ -78,7 +98,11 @@ vec4 sampleRoom(vec2 uv) {
 
     if (tLeft > 0.0 && hitLeft.z >= 0.0 && hitLeft.z <= depth && abs(hitLeft.y) <= 1.0 && tLeft < bestT) {
       bestT = tLeft;
-      bestUv = vec2(hitLeft.z / depth, 0.5 - hitLeft.y * 0.5);
+      bestUv = tileSurfaceUv(
+        vec2(hitLeft.z / depth, 0.5 - hitLeft.y * 0.5),
+        uLeftWallTiled,
+        vec2(uLeftWallTileSizeX, uLeftWallTileSizeY)
+      );
       bestCell = vec2(0.0, 1.0);
       bestShade = 0.72;
     }
@@ -90,7 +114,11 @@ vec4 sampleRoom(vec2 uv) {
 
     if (tRight > 0.0 && hitRight.z >= 0.0 && hitRight.z <= depth && abs(hitRight.y) <= 1.0 && tRight < bestT) {
       bestT = tRight;
-      bestUv = vec2(1.0 - hitRight.z / depth, 0.5 - hitRight.y * 0.5);
+      bestUv = tileSurfaceUv(
+        vec2(1.0 - hitRight.z / depth, 0.5 - hitRight.y * 0.5),
+        uRightWallTiled,
+        vec2(uRightWallTileSizeX, uRightWallTileSizeY)
+      );
       bestCell = vec2(2.0, 1.0);
       bestShade = 0.72;
     }
@@ -102,7 +130,11 @@ vec4 sampleRoom(vec2 uv) {
 
     if (tFloor > 0.0 && hitFloor.z >= 0.0 && hitFloor.z <= depth && abs(hitFloor.x) <= 1.0 && tFloor < bestT) {
       bestT = tFloor;
-      bestUv = vec2(hitFloor.x * 0.5 + 0.5, 1.0 - hitFloor.z / depth);
+      bestUv = tileSurfaceUv(
+        vec2(hitFloor.x * 0.5 + 0.5, 1.0 - hitFloor.z / depth),
+        uFloorTiled,
+        vec2(uFloorTileSizeX, uFloorTileSizeY)
+      );
       bestCell = vec2(1.0, 2.0);
       bestShade = 0.86;
     }
@@ -114,7 +146,11 @@ vec4 sampleRoom(vec2 uv) {
 
     if (tCeiling > 0.0 && hitCeiling.z >= 0.0 && hitCeiling.z <= depth && abs(hitCeiling.x) <= 1.0 && tCeiling < bestT) {
       bestT = tCeiling;
-      bestUv = vec2(hitCeiling.x * 0.5 + 0.5, hitCeiling.z / depth);
+      bestUv = tileSurfaceUv(
+        vec2(hitCeiling.x * 0.5 + 0.5, hitCeiling.z / depth),
+        uCeilingTiled,
+        vec2(uCeilingTileSizeX, uCeilingTileSizeY)
+      );
       bestCell = vec2(1.0, 0.0);
       bestShade = 0.64;
     }

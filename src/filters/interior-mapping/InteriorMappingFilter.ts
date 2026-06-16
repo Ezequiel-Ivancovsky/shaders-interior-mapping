@@ -26,6 +26,18 @@ export interface InteriorMappingFilterOptions {
   chromaKeyColor?: number | string | number[];
   chromaKeyTolerance?: number;
   brightness?: number;
+  leftWallTiled?: boolean;
+  leftWallTileSizeX?: number;
+  leftWallTileSizeY?: number;
+  rightWallTiled?: boolean;
+  rightWallTileSizeX?: number;
+  rightWallTileSizeY?: number;
+  ceilingTiled?: boolean;
+  ceilingTileSizeX?: number;
+  ceilingTileSizeY?: number;
+  floorTiled?: boolean;
+  floorTileSizeX?: number;
+  floorTileSizeY?: number;
 }
 
 export const InteriorMappingFilterMetadata = {
@@ -48,6 +60,18 @@ export const InteriorMappingFilterMetadata = {
     chromaKeyColor: 0x000000,
     chromaKeyTolerance: 0.12,
     brightness: 1,
+    leftWallTiled: false,
+    leftWallTileSizeX: 1,
+    leftWallTileSizeY: 1,
+    rightWallTiled: false,
+    rightWallTileSizeX: 1,
+    rightWallTileSizeY: 1,
+    ceilingTiled: false,
+    ceilingTileSizeX: 1,
+    ceilingTileSizeY: 1,
+    floorTiled: false,
+    floorTileSizeX: 1,
+    floorTileSizeY: 1,
   },
   controls: [
     { key: 'cameraX', type: 'number', min: -1, max: 1, step: 0.01 },
@@ -64,6 +88,18 @@ export const InteriorMappingFilterMetadata = {
     { key: 'chromaKeyColor', type: 'color' },
     { key: 'chromaKeyTolerance', type: 'number', min: 0.01, max: 1.0, step: 0.01 },
     { key: 'brightness', type: 'number', min: 0.2, max: 2, step: 0.01 },
+    { key: 'leftWallTiled', type: 'boolean' },
+    { key: 'leftWallTileSizeX', type: 'number', min: 0.05, max: 1, step: 0.01 },
+    { key: 'leftWallTileSizeY', type: 'number', min: 0.05, max: 1, step: 0.01 },
+    { key: 'rightWallTiled', type: 'boolean' },
+    { key: 'rightWallTileSizeX', type: 'number', min: 0.05, max: 1, step: 0.01 },
+    { key: 'rightWallTileSizeY', type: 'number', min: 0.05, max: 1, step: 0.01 },
+    { key: 'ceilingTiled', type: 'boolean' },
+    { key: 'ceilingTileSizeX', type: 'number', min: 0.05, max: 1, step: 0.01 },
+    { key: 'ceilingTileSizeY', type: 'number', min: 0.05, max: 1, step: 0.01 },
+    { key: 'floorTiled', type: 'boolean' },
+    { key: 'floorTileSizeX', type: 'number', min: 0.05, max: 1, step: 0.01 },
+    { key: 'floorTileSizeY', type: 'number', min: 0.05, max: 1, step: 0.01 },
   ],
 } satisfies FilterMetadata;
 
@@ -88,6 +124,18 @@ export class InteriorMappingFilter extends BaseFilterController {
   declare chromaKeyColor: number | string | number[];
   declare chromaKeyTolerance: number;
   declare brightness: number;
+  declare leftWallTiled: boolean;
+  declare leftWallTileSizeX: number;
+  declare leftWallTileSizeY: number;
+  declare rightWallTiled: boolean;
+  declare rightWallTileSizeX: number;
+  declare rightWallTileSizeY: number;
+  declare ceilingTiled: boolean;
+  declare ceilingTileSizeX: number;
+  declare ceilingTileSizeY: number;
+  declare floorTiled: boolean;
+  declare floorTileSizeX: number;
+  declare floorTileSizeY: number;
 
   constructor(camera: Phaser.Cameras.Scene2D.Camera, options: InteriorMappingFilterOptions = {}) {
     super(camera, 'PhaserInteriorMappingFilter', InteriorMappingFilterMetadata, options as Record<string, unknown>);

@@ -61,3 +61,115 @@ canvas {
   font-size: 12px;
   line-height: 1.35;
 }
+
+.export-modal[hidden] {
+  display: none;
+}
+
+.export-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.export-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(5 8 13 / 62%);
+  backdrop-filter: blur(4px);
+}
+
+.export-modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(920px, calc(100vw - 32px));
+  max-height: min(760px, calc(100vh - 32px));
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  color: #f7f0df;
+  background: #151922;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 8px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 44%);
+}
+
+.export-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+}
+
+.export-modal__header h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.export-modal__header p {
+  margin: 4px 0 0;
+  color: #b8c7cf;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.export-modal__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: #edf7ff;
+  background: rgb(255 255 255 / 8%);
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: rgb(255 255 255 / 14%);
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.export-modal__code {
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  border-radius: 0;
+}
+
+.export-modal__code code {
+  min-height: 100%;
+  padding: 18px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.copy-status {
+  min-height: 28px;
+  margin: 0;
+  padding: 7px 18px 10px;
+  color: #a9dcb8;
+  font-size: 12px;
+  line-height: 1.4;
+}

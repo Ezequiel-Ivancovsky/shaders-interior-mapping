@@ -1,6 +1,9 @@
 import Phaser from 'phaser';
 import { GUI } from 'lil-gui';
+import hljs from 'highlight.js/lib/core';
+import typescript from 'highlight.js/lib/languages/typescript';
 import '../node_modules/lil-gui/dist/lil-gui.css';
+import 'highlight.js/styles/github-dark.css';
 import './style.css';
 import {
   addInteriorMappingFilter,
@@ -35,6 +38,8 @@ interface DemoSettings {
 
 type InteriorMappingGuiState = Required<InteriorMappingFilterOptions>;
 
+hljs.registerLanguage('typescript', typescript);
+
 const SINGLE_ROOM_DEFAULTS: InteriorMappingGuiState = {
   ...(InteriorMappingFilterMetadata.defaults as InteriorMappingGuiState),
   roomDepth: 1.65,
@@ -57,6 +62,9 @@ class DemoScene extends Phaser.Scene {
   private singleRoomBackground!: Phaser.GameObjects.Rectangle;
   private cameraReadout: HTMLElement | null = null;
   private fpsReadout: HTMLElement | null = null;
+  private exportModal: HTMLElement | null = null;
+  private exportCode: HTMLElement | null = null;
+  private copyStatus: HTMLElement | null = null;
   private fpsUpdateTimer = 0;
 
   constructor() {
@@ -74,12 +82,16 @@ class DemoScene extends Phaser.Scene {
     this.game.canvas.tabIndex = 0;
     this.cameraReadout = document.querySelector('#camera-readout');
     this.fpsReadout = document.querySelector('#fps-readout');
+    this.exportModal = document.querySelector('#export-modal');
+    this.exportCode = document.querySelector('#export-code');
+    this.copyStatus = document.querySelector('#copy-status');
 
     this.cameras.main.setBackgroundColor(0x111319);
     this.addBackdrop();
     this.createRoomGrid();
     this.createSingleRoom();
     this.configureCamera();
+    this.configureExportModal();
     this.createGui();
     this.applyMode();
 
@@ -175,8 +187,9 @@ class DemoScene extends Phaser.Scene {
       .onChange(() => {
         this.applyMode();
         this.returnKeyboardFocus();
-      });
+    });
     this.gui.add({ reset: () => this.resetSingleRoomConfig() }, 'reset').name('Reset single room');
+    this.gui.add({ export: () => this.openExportModal() }, 'export').name('Export config');
 
     const filterFolder = this.gui.addFolder('Single room filter');
 
@@ -185,6 +198,12 @@ class DemoScene extends Phaser.Scene {
 
       if (control.type === 'color') {
         const controller = filterFolder.addColor(this.singleRoomState, key).name(control.key).onChange(() => this.applySingleRoomFilterState());
+        this.singleRoomControllers.push(controller);
+        continue;
+      }
+
+      if (control.type === 'boolean') {
+        const controller = filterFolder.add(this.singleRoomState, key).name(control.key).onChange(() => this.applySingleRoomFilterState());
         this.singleRoomControllers.push(controller);
         continue;
       }
@@ -241,6 +260,141 @@ class DemoScene extends Phaser.Scene {
     }
 
     this.returnKeyboardFocus();
+  }
+
+  private configureExportModal(): void {
+    const closeButton = document.querySelector<HTMLButtonElement>('#close-export-modal');
+    const copyButton = document.querySelector<HTMLButtonElement>('#copy-export-code');
+    const backdrop = document.querySelector<HTMLElement>('[data-export-close]');
+
+    if (closeButton) {
+      closeButton.onclick = () => this.closeExportModal();
+    }
+
+    if (backdrop) {
+      backdrop.onclick = () => this.closeExportModal();
+    }
+
+    if (copyButton) {
+      copyButton.onclick = () => {
+        void this.copyExportCode();
+      };
+    }
+
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !this.exportModal?.hidden) {
+        this.closeExportModal();
+      }
+    });
+  }
+
+  private openExportModal(): void {
+    if (!this.exportModal || !this.exportCode) {
+      return;
+    }
+
+    const code = this.createExportCode();
+    this.exportCode.textContent = code;
+    this.exportCode.removeAttribute('data-highlighted');
+    hljs.highlightElement(this.exportCode);
+
+    if (this.copyStatus) {
+      this.copyStatus.textContent = '';
+    }
+
+    this.exportModal.hidden = false;
+    document.querySelector<HTMLElement>('#copy-export-code')?.focus({ preventScroll: true });
+  }
+
+  private closeExportModal(): void {
+    if (this.exportModal) {
+      this.exportModal.hidden = true;
+    }
+
+    this.returnKeyboardFocus();
+  }
+
+  private async copyExportCode(): Promise<void> {
+    const code = this.exportCode?.textContent ?? '';
+
+    if (!code) {
+      return;
+    }
+
+    if (this.copyStatus) {
+      this.copyStatus.textContent = 'Copying...';
+    }
+
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard API unavailable.');
+      }
+
+      await Promise.race([
+        navigator.clipboard.writeText(code),
+        new Promise((_, reject) => {
+          window.setTimeout(() => reject(new Error('Clipboard copy timed out.')), 1000);
+        }),
+      ]);
+
+      if (this.copyStatus) {
+        this.copyStatus.textContent = 'Copied TypeScript config.';
+      }
+    } catch {
+      this.copyExportCodeWithFallback(code);
+    }
+  }
+
+  private copyExportCodeWithFallback(code: string): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = code;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    const copied = document.execCommand('copy');
+    textarea.remove();
+
+    if (this.copyStatus) {
+      this.copyStatus.textContent = copied
+        ? 'Copied TypeScript config.'
+        : 'Copy failed. Select the code and copy it manually.';
+    }
+  }
+
+  private createExportCode(): string {
+    const entries = Object.entries(this.singleRoomState)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, value]) => `  ${key}: ${this.formatExportValue(value)},`)
+      .join('\n');
+
+    return `import { addInteriorMappingFilter, type InteriorMappingFilterOptions } from './filters';
+
+const interiorMappingConfig = {
+${entries}
+} satisfies InteriorMappingFilterOptions;
+
+const filter = addInteriorMappingFilter(roomSprite, interiorMappingConfig);
+`;
+  }
+
+  private formatExportValue(value: unknown): string {
+    if (typeof value === 'string') {
+      return JSON.stringify(value);
+    }
+
+    if (typeof value === 'number') {
+      return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(4)));
+    }
+
+    if (Array.isArray(value)) {
+      return `[${value.map((item) => this.formatExportValue(item)).join(', ')}]`;
+    }
+
+    return String(value);
   }
 
   private returnKeyboardFocus(): void {

@@ -41,12 +41,17 @@ The floating `lil-gui` panel has a `Single room mode` switch:
 - Off: shows the 10x10 grid with randomized room filter values.
 - On: shows one centered room and exposes every `InteriorMappingFilter` option for realtime editing.
 - `Reset single room`: restores the single-room filter controls to the demo defaults.
+- `Export config`: opens a modal with highlighted TypeScript code for the current single-room filter configuration. Use the copy icon button in the modal header to copy the snippet.
 
-In single-room mode, changing values such as `cameraX`, `cameraY`, `viewWidth`, `viewHeight`, `roomDepth`, `midGroundDepth`, `midGroundX`, `midGroundY`, `midGroundScale`, `midGroundAlpha`, `frontWallAlpha`, `chromaKeyColor`, `chromaKeyTolerance`, or `brightness` updates the active filter immediately. `viewWidth` and `viewHeight` also resize the displayed room sprite, so the whole room changes aspect instead of only changing the midground projection.
+In single-room mode, changing values such as `cameraX`, `cameraY`, `viewWidth`, `viewHeight`, `roomDepth`, `midGroundDepth`, `midGroundX`, `midGroundY`, `midGroundScale`, `midGroundAlpha`, `frontWallAlpha`, `chromaKeyColor`, `chromaKeyTolerance`, `brightness`, and the wall/ceiling/floor tiling options updates the active filter immediately. `viewWidth` and `viewHeight` also resize the displayed room sprite, so the whole room changes aspect instead of only changing the midground projection.
+
+The export modal uses `highlight.js` for TypeScript highlighting. It was chosen over heavier highlighters because this demo only needs a small, synchronous browser-side snippet viewer.
 
 ## Atlas Layout
 
 The shader samples from one `3x3` atlas texture. The included demo asset is `public/assets/boxwindow-shader.png`.
+
+![Interior mapping atlas](./public/assets/boxwindow-shader.png)
 
 ```text
 row 0: [ frontWall ] [ ceiling  ] [ empty ]
@@ -133,6 +138,8 @@ addInteriorMappingFilter(sprite, {
 - `midGroundDepth`: Places the midground atlas cell between the front window and the back wall. Smaller values bring it closer to the viewer.
 - `frontWallAlpha`: Controls how strongly the front wall/window cell overlays the generated room.
 - `brightness`: Multiplies the sampled room colors after the shader's wall shading.
+- `leftWallTiled`, `rightWallTiled`, `ceilingTiled`, `floorTiled`: Repeats that surface's atlas cell instead of stretching it across the whole virtual surface.
+- `leftWallTileSizeX/Y`, `rightWallTileSizeX/Y`, `ceilingTileSizeX/Y`, `floorTileSizeX/Y`: Controls the repeat size separately on each surface UV axis. `1` means one copy across that axis; `0.25` means four repeats across that axis.
 
 For a deeper room with a softer facade:
 
@@ -142,6 +149,15 @@ addInteriorMappingFilter(sprite, {
   midGroundDepth: 0.35,
   frontWallAlpha: 0.75,
   brightness: 1.15,
+  floorTiled: true,
+  floorTileSizeX: 0.5,
+  floorTileSizeY: 0.25,
+  leftWallTiled: true,
+  leftWallTileSizeX: 0.35,
+  leftWallTileSizeY: 0.5,
+  rightWallTiled: true,
+  rightWallTileSizeX: 0.35,
+  rightWallTileSizeY: 0.5,
 });
 ```
 
@@ -156,11 +172,22 @@ addInteriorMappingFilter(sprite, {
 });
 ```
 
-## Source
+## Future TODO
 
-The interior mapping filter and atlas are adapted from:
+- Add a dynamic interior item system for multiple midground objects instead of relying only on the atlas `midGround` cell.
+- Keep the shader responsible for the room shell: back wall, side walls, ceiling, floor, and front wall/window.
+- Add a `RoomInteriorLayer` that owns an array of Phaser objects placed inside a room.
+- Give each item its own config: image or sprite key, animation key, normalized room position, depth, scale, alpha, velocity, and static/moving behavior.
+- Mirror the shader projection math in TypeScript so each item's room-space position can be projected into world/screen coordinates every frame.
+- Support static props, animated sprites, and moving entities such as a player walking inside the room.
+- Sort dynamic items by depth so farther objects render behind nearer objects.
+- Add masking/clipping so dynamic sprites cannot spill outside the visible room/window opening.
+- Render the front wall/window layer above dynamic items so the frame can occlude them naturally.
+- Consider disabling the shader's built-in `midGround` layer when dynamic Phaser sprites are used, or keep it only for static background dressing.
 
-```text
-src/filters/interior-mapping
-public/assets/boxwindow-shader.png
-```
+## Inspiration
+
+This demo was inspired by these interior mapping writeups:
+
+- [Interior Mapping: Rendering Real Rooms without Geometry](https://80.lv/articles/interior-mapping-rendering-real-rooms-without-geometry)
+- [Interior Mapping Shader by Julius Ihle](https://julius-ihle.de/?p=2451)
